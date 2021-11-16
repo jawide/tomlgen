@@ -173,6 +173,7 @@ func main() {
 				if len(n.Decs.NodeDecs.Start) > 0 {
 					s := n.Decs.NodeDecs.Start[0]
 					if regexp.MustCompile(`//go:generate\s+tomlgen\s+.*type.*`).MatchString(s) {
+						n.Specs = n.Specs[:1]
 						n.Specs[0] = structNodes[0]
 						for _, spec := range structNodes[1:] {
 							n.Specs = append(n.Specs, spec)
@@ -240,7 +241,6 @@ func newStructNodes(structStr string) []*dst.TypeSpec {
 		panic(err)
 	}
 	var nodes []*dst.TypeSpec
-	fmt.Println(len(mockFile.Decls))
 	for _, decl := range mockFile.Decls {
 		nodes = append(nodes, decl.(*dst.GenDecl).Specs[0].(*dst.TypeSpec))
 	}
