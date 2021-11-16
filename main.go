@@ -160,7 +160,7 @@ func main() {
 			log.Fatal(err)
 		}
 		structStr := genStructByToml(typeSet.Arg(0), *structNameForType)
-		structNode := newStructNode(structStr)
+		structNodes := newStructNodes(structStr)
 		if fs == nil {
 			fs = token.NewFileSet()
 		}
@@ -173,7 +173,10 @@ func main() {
 				if len(n.Decs.NodeDecs.Start) > 0 {
 					s := n.Decs.NodeDecs.Start[0]
 					if regexp.MustCompile(`//go:generate\s+tomlgen\s+.*type.*`).MatchString(s) {
-						n.Specs[0] = structNode
+						n.Specs[0] = structNodes[0]
+						for _, spec := range structNodes[1:] {
+							n.Specs = append(n.Specs, spec)
+						}
 					}
 				}
 				break
@@ -231,12 +234,17 @@ func saveDstFile(file *dst.File) {
 	}
 }
 
-func newStructNode(structStr string) *dst.TypeSpec {
+func newStructNodes(structStr string) []*dst.TypeSpec {
 	mockFile, err := decorator.Parse("package main\n" + structStr)
 	if err != nil {
 		panic(err)
 	}
-	return mockFile.Decls[0].(*dst.GenDecl).Specs[0].(*dst.TypeSpec)
+	var nodes []*dst.TypeSpec
+	fmt.Println(len(mockFile.Decls))
+	for _, decl := range mockFile.Decls {
+		nodes = append(nodes, decl.(*dst.GenDecl).Specs[0].(*dst.TypeSpec))
+	}
+	return nodes
 }
 
 func newFuncBodyNode(funcStr string) *dst.BlockStmt {
